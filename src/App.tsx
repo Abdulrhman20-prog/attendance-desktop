@@ -5,7 +5,10 @@ import {
   saveCurrentReport, 
   switchReportActiveDay, 
   updateEmployeeDayStatus,
-  resetToOriginalSafariData
+  resetToOriginalSafariData,
+  batchUpdateEmployees,
+  addNewEmployeeToReport,
+  deleteEmployeeFromReport
 } from './services/storageService';
 import { Header } from './components/Header';
 import { KPICards } from './components/KPICards';
@@ -13,6 +16,7 @@ import { FilterToolbar } from './components/FilterToolbar';
 import { TimesheetMatrixView } from './components/TimesheetMatrixView';
 import { ManagerHierarchyView } from './components/ManagerHierarchyView';
 import { FlatTableView } from './components/FlatTableView';
+import { DataEditorView } from './components/DataEditorView';
 import { ExcelUploadModal } from './components/ExcelUploadModal';
 import { EmployeeEditModal } from './components/EmployeeEditModal';
 import { AlertCircle } from 'lucide-react';
@@ -32,7 +36,7 @@ export const App: React.FC = () => {
     sortOrder: 'asc'
   });
 
-  const [viewMode, setViewMode] = useState<'matrix' | 'tree' | 'table'>('matrix');
+  const [viewMode, setViewMode] = useState<'matrix' | 'tree' | 'table' | 'editor'>('matrix');
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<AttendanceRecord | null>(null);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
@@ -80,6 +84,30 @@ export const App: React.FC = () => {
     setCurrentReport(updated);
   };
 
+  const handleBatchSaveEmployees = (updates: Record<string, Partial<AttendanceRecord>>) => {
+    if (!currentReport) return;
+    const updated = batchUpdateEmployees(currentReport, updates);
+    setCurrentReport(updated);
+  };
+
+  const handleAddEmployee = (newEmp: {
+    employeeName: string;
+    employeeId: string;
+    region: string;
+    branchCode: string;
+    managerName: string;
+  }) => {
+    if (!currentReport) return;
+    const updated = addNewEmployeeToReport(currentReport, newEmp);
+    setCurrentReport(updated);
+  };
+
+  const handleDeleteEmployee = (employeeId: string) => {
+    if (!currentReport) return;
+    const updated = deleteEmployeeFromReport(currentReport, employeeId);
+    setCurrentReport(updated);
+  };
+
   return (
     <div style={{ minHeight: '100vh', padding: '24px', maxWidth: '1680px', margin: '0 auto' }}>
       
@@ -111,7 +139,7 @@ export const App: React.FC = () => {
             onDayChange={handleDayChange}
           />
 
-          {/* Dynamic View: Timesheet Matrix | Hierarchy Tree | Flat Daily Table */}
+          {/* Dynamic View: Timesheet Matrix | Hierarchy Tree | Flat Daily Table | Data Editor */}
           {viewMode === 'matrix' && (
             <TimesheetMatrixView
               records={currentReport.records}
@@ -134,6 +162,19 @@ export const App: React.FC = () => {
               records={currentReport.records}
               filters={filters}
               onEditEmployee={setEditingEmployee}
+            />
+          )}
+
+          {viewMode === 'editor' && (
+            <DataEditorView
+              report={currentReport}
+              records={currentReport.records}
+              availableManagers={currentReport.managers.map(m => m.managerName)}
+              regions={currentReport.regions}
+              onBatchSave={handleBatchSaveEmployees}
+              onAddEmployee={handleAddEmployee}
+              onDeleteEmployee={handleDeleteEmployee}
+              onEditEmployeeDetails={setEditingEmployee}
             />
           )}
         </main>

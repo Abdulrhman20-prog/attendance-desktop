@@ -37,11 +37,17 @@ export function getStoredActiveDay(): number {
  */
 export function initializeSafariData(): DailyReport {
   const existing = getStoredReport();
-  if (existing && existing.records && existing.records.length > 0) {
+  // Auto-upgrade if previous cached report had fewer days or fewer records
+  if (
+    existing && 
+    existing.records && 
+    existing.records.length >= 310 && 
+    (existing.availableDayNumbers?.length || 0) >= 26
+  ) {
     return existing;
   }
 
-  const defaultReport = getDefaultSafariReport(1);
+  const defaultReport = getDefaultSafariReport(0);
   saveCurrentReport(defaultReport);
   return defaultReport;
 }
@@ -49,7 +55,7 @@ export function initializeSafariData(): DailyReport {
 /**
  * Reset data back to original real SAfari.xlsx dataset
  */
-export function resetToOriginalSafariData(dayNumber: number = 1): DailyReport {
+export function resetToOriginalSafariData(dayNumber: number = 0): DailyReport {
   localStorage.removeItem(STORAGE_REPORT_KEY);
   const freshReport = getDefaultSafariReport(dayNumber);
   saveCurrentReport(freshReport);
@@ -57,7 +63,7 @@ export function resetToOriginalSafariData(dayNumber: number = 1): DailyReport {
 }
 
 /**
- * Switch the active day (0 = all period matrix, 1..14 = day number)
+ * Switch the active day (0 = all period matrix, 1..26 = day number)
  */
 export function switchReportActiveDay(report: DailyReport, dayNumber: number): DailyReport {
   const updatedReport = buildSafariDailyReport(report.records, report.fileName, dayNumber);
@@ -66,7 +72,7 @@ export function switchReportActiveDay(report: DailyReport, dayNumber: number): D
 }
 
 /**
- * Update a specific employee's status for a day
+ * Update a specific employee's status or details
  */
 export function updateEmployeeDayStatus(
   currentReport: DailyReport,
@@ -76,7 +82,15 @@ export function updateEmployeeDayStatus(
   const records = currentReport.records.map(emp => {
     if (emp.employeeId === employeeId || emp.id === employeeId) {
       const updated = { ...emp, ...updates };
-      // Also update day record if active day is 1..N
+
+      // Re-evaluate unlinked flag if manager or branch changed
+      if (updates.managerName || updates.branchCode) {
+        const mgr = updated.managerName;
+        const code = updated.branchCode;
+        updated.isUnlinked = !mgr || mgr.includes('غير معين') || mgr.includes('غير محدد') || mgr === '0' || !code || code === 'SAF-42' || code === 'غير محدد';
+      }
+
+      // Also update day record if active day is 1..N and status was provided
       if (currentReport.activeDayNumber > 0 && updates.status) {
         const dayNum = currentReport.activeDayNumber;
         const currentDay = updated.days[dayNum] || { dayNumber: dayNum };
@@ -111,6 +125,111 @@ export function updateEmployeeDayStatus(
     return emp;
   });
 
+  const updatedReport = buildSafariDailyReport(
+    records,
+    currentReport.fileName,
+    currentReport.activeDayNumber
+  );
+  saveCurrentReport(updatedReport);
+  return updatedReport;
+}
+
+/**
+ * Batch update multiple employees at once (for Data Editor view)
+ */
+export function batchUpdateEmployees(
+  currentReport: DailyReport,
+  employeeUpdates: Record<string, Partial<AttendanceRecord>>
+): DailyReport {
+  const records = currentReport.records.map(emp => {
+    const patch = employeeUpdates[emp.employeeId] || employeeUpdates[emp.id];
+    if (!patch) return emp;
+
+    const updated = { ...emp, ...patch };
+    const mgr = updated.managerName;
+    const code = updated.branchCode;
+    updated.isUnlinked = !mgr || mgr.includes('غير معين') || mgr.includes('غير محدد') || mgr === '0' || !code || code === 'SAF-42' || code === 'غير محدد';
+    return updated;
+  });
+
+  const updatedReport = buildSafariDailyReport(
+    records,
+    currentReport.fileName,
+    currentReport.activeDayNumber
+  );
+  saveCurrentReport(updatedReport);
+  return updatedReport;
+}
+
+/**
+ * Add a new employee to report
+ */
+export function addNewEmployeeToReport(
+  currentReport: DailyReport,
+  newEmp: {
+    employeeName: string;
+    employeeId: string;
+    region: string;
+    branchCode: string;
+    managerName: string;
+  }
+): DailyReport {
+  const dayDays: Record<number, any> = {};
+  const totalDays = currentReport.totalDays || 26;
+  for (let d = 1; d <= totalDays; d++) {
+    dayDays[d] = {
+      dayNumber: d,
+      dateStr: `اليوم ${d}`,
+      rawText: 'AM : onTime',
+      status: 'present',
+      shift: 'AM',
+      isOvertime: false
+    };
+  }
+
+  const mgr = newEmp.managerName;
+  const code = newEmp.branchCode;
+  const isUnlinked = !mgr || mgr.includes('غير معين') || mgr.includes('غير محدد') || mgr === '0' || !code || code === 'SAF-42' || code === 'غير محدد';
+
+  const newRecord: AttendanceRecord = {
+    id: `safari-emp-${newEmp.employeeId}`,
+    employeeId: newEmp.employeeId,
+    employeeName: newEmp.employeeName,
+    pfAttendance: newEmp.employeeId,
+    region: newEmp.region || 'الوسطى (Central)',
+    branchCode: newEmp.branchCode || 'غير محدد',
+    managerName: newEmp.managerName || 'إدارة عامة / غير معين',
+    department: newEmp.region || 'الوسطى (Central)',
+    date: 'اليوم 1',
+    activeDayNumber: 1,
+    status: 'present',
+    shift: 'AM',
+    rawStatus: 'AM : onTime',
+    lateMinutes: 0,
+    isUnlinked,
+    days: dayDays
+  };
+
+  const records = [newRecord, ...currentReport.records];
+  const updatedReport = buildSafariDailyReport(
+    records,
+    currentReport.fileName,
+    currentReport.activeDayNumber
+  );
+  saveCurrentReport(updatedReport);
+  return updatedReport;
+}
+
+/**
+ * Delete an employee from report
+ */
+export function deleteEmployeeFromReport(
+  currentReport: DailyReport,
+  employeeId: string
+): DailyReport {
+  const records = currentReport.records.filter(
+    emp => emp.employeeId !== employeeId && emp.id !== employeeId
+  );
   const updatedReport = buildSafariDailyReport(
     records,
     currentReport.fileName,

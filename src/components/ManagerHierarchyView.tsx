@@ -95,7 +95,6 @@ export const ManagerHierarchyView: React.FC<ManagerHierarchyViewProps> = ({
           </span>
         );
       case 'leave':
-      case 'sick':
         return (
           <span style={{
             padding: '3px 8px',
@@ -103,6 +102,20 @@ export const ManagerHierarchyView: React.FC<ManagerHierarchyViewProps> = ({
             background: 'rgba(59, 130, 246, 0.15)',
             color: '#60a5fa',
             border: '1px solid rgba(59, 130, 246, 0.3)',
+            fontSize: '0.75rem',
+            fontWeight: 700
+          }}>
+            {label}
+          </span>
+        );
+      case 'sick':
+        return (
+          <span style={{
+            padding: '3px 8px',
+            borderRadius: '6px',
+            background: 'rgba(20, 184, 166, 0.15)',
+            color: '#2dd4bf',
+            border: '1px solid rgba(20, 184, 166, 0.3)',
             fontSize: '0.75rem',
             fontWeight: 700
           }}>
@@ -156,7 +169,15 @@ export const ManagerHierarchyView: React.FC<ManagerHierarchyViewProps> = ({
         if (filters.selectedRegion !== 'all' && !emp.region.includes(filters.selectedRegion)) return false;
         if (filters.selectedBranchCode !== 'all' && emp.branchCode !== filters.selectedBranchCode) return false;
         if (filters.selectedShift !== 'all' && emp.shift !== filters.selectedShift) return false;
-        if (filters.selectedStatus !== 'all' && emp.status !== filters.selectedStatus) return false;
+        if (filters.selectedStatus !== 'all') {
+          if (filters.activeDay === 0) {
+            const hasStatusInDays = Object.values(emp.days).some(d => d.status === filters.selectedStatus);
+            if (!hasStatusInDays) return false;
+          } else {
+            if (emp.status !== filters.selectedStatus) return false;
+          }
+        }
+        if (filters.showOnlyUnlinked && !emp.isUnlinked) return false;
         return true;
       });
 

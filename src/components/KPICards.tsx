@@ -180,10 +180,10 @@ export const KPICards: React.FC<KPICardsProps> = ({ report }) => {
         </div>
       </div>
 
-      {/* 6. Leaves & OFF */}
+      {/* 6. Leaves (AL + SICK) & OFF */}
       <div className="glass-card" style={{ padding: '18px 20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-          <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600 }}>الإجازات وأيام الراحة</span>
+          <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600 }}>الإجازات (سنوية / مرضية) والراحة</span>
           <div style={{
             width: '36px',
             height: '36px',
@@ -197,18 +197,24 @@ export const KPICards: React.FC<KPICardsProps> = ({ report }) => {
             <Coffee size={20} />
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: '14px' }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px', flexWrap: 'wrap' }}>
           <div>
-            <span style={{ fontSize: '1.6rem', fontWeight: 800, color: '#60a5fa' }}>
-              {report.leaveCount}
+            <span style={{ fontSize: '1.5rem', fontWeight: 800, color: '#60a5fa' }}>
+              {report.annualLeaveCount !== undefined ? report.annualLeaveCount : report.leaveCount}
             </span>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginRight: '4px' }}>إجازة (AL/مرضي)</span>
+            <span style={{ fontSize: '0.73rem', color: 'var(--text-muted)', marginRight: '3px' }}>سنوية (AL)</span>
           </div>
           <div>
-            <span style={{ fontSize: '1.6rem', fontWeight: 800, color: '#94a3b8' }}>
+            <span style={{ fontSize: '1.5rem', fontWeight: 800, color: '#2dd4bf' }}>
+              {report.sickCount !== undefined ? report.sickCount : 0}
+            </span>
+            <span style={{ fontSize: '0.73rem', color: 'var(--text-muted)', marginRight: '3px' }}>مرضية (SICK)</span>
+          </div>
+          <div>
+            <span style={{ fontSize: '1.5rem', fontWeight: 800, color: '#94a3b8' }}>
               {report.offCount}
             </span>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginRight: '4px' }}>راحة (OFF)</span>
+            <span style={{ fontSize: '0.73rem', color: 'var(--text-muted)', marginRight: '3px' }}>راحة (OFF)</span>
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '8px', fontSize: '0.78rem', color: 'var(--text-dim)' }}>
@@ -218,6 +224,11 @@ export const KPICards: React.FC<KPICardsProps> = ({ report }) => {
           <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
             <Moon size={12} color="#818cf8" /> مسائي: <strong>{report.pmCount}</strong>
           </span>
+          {(report.unlinkedCount || 0) > 0 && (
+            <span style={{ color: '#f59e0b', fontWeight: 700, marginRight: 'auto' }}>
+              ⚠️ غير مربوط: <strong>{report.unlinkedCount}</strong>
+            </span>
+          )}
         </div>
       </div>
 

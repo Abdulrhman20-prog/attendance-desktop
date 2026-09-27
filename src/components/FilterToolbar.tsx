@@ -11,6 +11,7 @@ import {
   Building
 } from 'lucide-react';
 import type { AttendanceStatus, FilterOptions, ManagerGroup, ShiftType } from '../types/attendance';
+import { UserCheck } from 'lucide-react';
 
 interface FilterToolbarProps {
   filters: FilterOptions;
@@ -19,8 +20,8 @@ interface FilterToolbarProps {
   regions: string[];
   branchCodes: string[];
   availableDays: number[];
-  viewMode: 'matrix' | 'tree' | 'table';
-  onViewModeChange: (mode: 'matrix' | 'tree' | 'table') => void;
+  viewMode: 'matrix' | 'tree' | 'table' | 'editor';
+  onViewModeChange: (mode: 'matrix' | 'tree' | 'table' | 'editor') => void;
   onDayChange: (dayNumber: number) => void;
 }
 
@@ -37,13 +38,13 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
 }) => {
   const statusList: { id: AttendanceStatus | 'all'; label: string; countColor?: string }[] = [
     { id: 'all', label: 'كافة الحالات' },
-    { id: 'present', label: 'في الموعد (onTime)' },
-    { id: 'late', label: 'تأخير (DELAY)' },
-    { id: 'absent', label: 'غياب (ABS)' },
-    { id: 'overtime', label: 'إضافي (OverTime)' },
-    { id: 'leave', label: 'إجازة سنوية (AL)' },
-    { id: 'sick', label: 'إجازة مرضية (SICK)' },
-    { id: 'off', label: 'راحة أسبوعية (OFF)' },
+    { id: 'present', label: '🟢 في الموعد (onTime)' },
+    { id: 'late', label: '🟡 تأخير (DELAY)' },
+    { id: 'absent', label: '🔴 غياب (ABS)' },
+    { id: 'overtime', label: '🟣 إضافي (OverTime)' },
+    { id: 'leave', label: '🔵 إجازة سنوية (AL)' },
+    { id: 'sick', label: '🩺 إجازة مرضية (SICK)' },
+    { id: 'off', label: '⚪ راحة أسبوعية (OFF)' },
   ];
 
   return (
@@ -198,6 +199,28 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
             >
               <LayoutGrid size={15} />
               <span>الجدول اليومي</span>
+            </button>
+
+            <button
+              onClick={() => onViewModeChange('editor')}
+              title="إدارة وتعديل البيانات والربط"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '6px 12px',
+                borderRadius: '6px',
+                border: 'none',
+                background: viewMode === 'editor' ? 'var(--primary)' : 'transparent',
+                color: viewMode === 'editor' ? '#ffffff' : 'var(--text-muted)',
+                fontWeight: viewMode === 'editor' ? 700 : 500,
+                fontSize: '0.82rem',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <UserCheck size={15} />
+              <span>إدارة وتعديل البيانات</span>
             </button>
           </div>
 

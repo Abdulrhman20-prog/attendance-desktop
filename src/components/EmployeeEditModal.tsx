@@ -21,9 +21,31 @@ export const EmployeeEditModal: React.FC<EmployeeEditModalProps> = ({
   const [shift, setShift] = useState<ShiftType>(employee.shift || 'none');
   const [managerName, setManagerName] = useState(employee.managerName);
   const [branchCode, setBranchCode] = useState(employee.branchCode);
-  const [region] = useState(employee.region);
+  const [region, setRegion] = useState(employee.region);
   const [lateMinutes, setLateMinutes] = useState(employee.lateMinutes || 0);
   const [notes, setNotes] = useState(employee.notes || '');
+
+  const standardRegions = [
+    'الوسطى (Central)',
+    'الشرقية (Eastern)',
+    'الغربية (Western)',
+    'الشمالية (Northern)',
+    'الجنوبية (Southern)',
+    'إدارة عامة / غير محدد'
+  ];
+
+  const standardManagers = [
+    'Zayed Al Subaie',
+    'Musab Hakami',
+    'Bandar Garziz',
+    'Mohammed Gobran Abdali',
+    'Othman Al Sagri',
+    'Mohammed Al - Gahtani',
+    'Abdul Rahman Mohsen Al Enzi',
+    'إدارة عامة / غير معين'
+  ];
+
+  const allManagers = Array.from(new Set([...standardManagers, ...availableManagers]));
 
   const handleStatusChange = (newStatus: AttendanceStatus) => {
     setStatus(newStatus);
@@ -174,11 +196,11 @@ export const EmployeeEditModal: React.FC<EmployeeEditModalProps> = ({
             </div>
           </div>
 
-          {/* Row: Manager & Branch Code */}
+          {/* Row: Manager & Region */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <div>
               <label style={{ display: 'block', fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '6px', fontWeight: 600 }}>
-                المشرف / المدير:
+                المشرف / المدير المباشر:
               </label>
               <select
                 value={managerName}
@@ -192,10 +214,11 @@ export const EmployeeEditModal: React.FC<EmployeeEditModalProps> = ({
                   color: 'var(--text-main)',
                   fontFamily: 'var(--font-arabic)',
                   fontSize: '0.88rem',
-                  outline: 'none'
+                  outline: 'none',
+                  cursor: 'pointer'
                 }}
               >
-                {availableManagers.map(mgr => (
+                {allManagers.map(mgr => (
                   <option key={mgr} value={mgr} style={{ background: '#111827' }}>
                     {mgr}
                   </option>
@@ -205,12 +228,11 @@ export const EmployeeEditModal: React.FC<EmployeeEditModalProps> = ({
 
             <div>
               <label style={{ display: 'block', fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '6px', fontWeight: 600 }}>
-                كود الفرع:
+                المنطقة:
               </label>
-              <input
-                type="text"
-                value={branchCode}
-                onChange={(e) => setBranchCode(e.target.value)}
+              <select
+                value={region}
+                onChange={(e) => setRegion(e.target.value)}
                 style={{
                   width: '100%',
                   padding: '10px 12px',
@@ -220,10 +242,40 @@ export const EmployeeEditModal: React.FC<EmployeeEditModalProps> = ({
                   color: 'var(--text-main)',
                   fontFamily: 'var(--font-arabic)',
                   fontSize: '0.88rem',
-                  outline: 'none'
+                  outline: 'none',
+                  cursor: 'pointer'
                 }}
-              />
+              >
+                {standardRegions.map(reg => (
+                  <option key={reg} value={reg} style={{ background: '#111827' }}>
+                    {reg}
+                  </option>
+                ))}
+              </select>
             </div>
+          </div>
+
+          {/* Row: Branch Code */}
+          <div>
+            <label style={{ display: 'block', fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '6px', fontWeight: 600 }}>
+              كود الفرع / الموقع:
+            </label>
+            <input
+              type="text"
+              value={branchCode}
+              onChange={(e) => setBranchCode(e.target.value.toUpperCase())}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                background: 'var(--bg-card-subtle)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: 'var(--radius-md)',
+                color: 'var(--text-main)',
+                fontFamily: 'monospace',
+                fontSize: '0.88rem',
+                outline: 'none'
+              }}
+            />
           </div>
 
           {/* Delay Minutes (conditional) */}

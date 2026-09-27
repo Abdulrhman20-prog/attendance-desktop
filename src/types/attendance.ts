@@ -38,6 +38,7 @@ export interface AttendanceRecord {
   checkOut?: string;       // HH:mm
   lateMinutes: number;     // دقائق التأخير
   notes?: string;          // ملاحظات
+  isUnlinked?: boolean;    // موظف غير مربوط بفرع أو مدير محدد
   days: Record<number, DayStatus>; // مصفوفة جميع الأيام (1..14..31)
 }
 
@@ -52,7 +53,9 @@ export interface ManagerGroup {
   lateCount: number;     // Delay
   absentCount: number;   // Absent
   overtimeCount: number; // OverTime
-  leaveCount: number;    // Leave (AL + Sick)
+  leaveCount: number;    // Total Leave (AL + Sick)
+  annualLeaveCount?: number; // إجازة سنوية (AL)
+  sickCount?: number;        // إجازة مرضية (SICK)
   offCount: number;      // OFF
   attendanceRate: number;// 0 - 100%
   totalDelayMinutes: number;
@@ -71,6 +74,7 @@ export interface DailyReport {
   uploadTimestamp: number;
   totalEmployees: number;
   totalManagers: number;
+  unlinkedCount?: number;     // عدد الكوادر غير المربوطة
   regions: string[];
   branchCodes: string[];
   // Aggregate stats
@@ -78,7 +82,9 @@ export interface DailyReport {
   lateCount: number;          // Delay
   absentCount: number;        // Absent
   overtimeCount: number;      // OverTime
-  leaveCount: number;         // Leave (AL + Sick)
+  leaveCount: number;         // Total Leave (AL + Sick)
+  annualLeaveCount?: number;  // إجازة سنوية (AL)
+  sickCount?: number;         // إجازة مرضية (SICK)
   offCount: number;           // OFF
   amCount: number;
   pmCount: number;
@@ -109,6 +115,7 @@ export interface FilterOptions {
   selectedBranchCode: string; // 'all' or specific branch code
   selectedShift: ShiftType | 'all'; // 'all', 'AM', 'PM'
   selectedStatus: AttendanceStatus | 'all';
+  showOnlyUnlinked?: boolean; // تصفية الموظفين غير المربوطين فقط
   activeDay: number;          // 0 = Full Period (مصفوفة الأيام), 1..14 = specific day
   sortBy: 'name' | 'id' | 'code' | 'region' | 'status';
   sortOrder: 'asc' | 'desc';

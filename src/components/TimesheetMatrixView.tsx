@@ -51,8 +51,17 @@ export const TimesheetMatrixView: React.FC<TimesheetMatrixViewProps> = ({
 
       // Status filter
       if (filters.selectedStatus !== 'all') {
-        if (emp.status !== filters.selectedStatus) return false;
+        if (filters.activeDay === 0) {
+          // In full period matrix view: match if employee has this status on ANY day!
+          const hasStatusInDays = Object.values(emp.days).some(d => d.status === filters.selectedStatus);
+          if (!hasStatusInDays) return false;
+        } else {
+          if (emp.status !== filters.selectedStatus) return false;
+        }
       }
+
+      // Unlinked filter
+      if (filters.showOnlyUnlinked && !emp.isUnlinked) return false;
 
       return true;
     });
